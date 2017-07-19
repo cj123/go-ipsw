@@ -4,12 +4,15 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/cj123/ranger"
 )
+
+var MaxDownloadTries = 10
 
 var DefaultClient HTTPClient = &http.Client{
 	Timeout: 30 * time.Second,
@@ -45,21 +48,30 @@ func DownloadFile(resource, file string, w io.Writer) error {
 		return err
 	}
 
-	reader, err := ranger.NewReader(
-		&ranger.HTTPRanger{
-			URL:    u,
-			Client: DefaultClient,
-		},
-	)
+	var zipReader *zip.Reader
 
-	if err != nil {
-		return err
-	}
+	for downloadCount := 1; downloadCount <= MaxDownloadTries; downloadCount++ {
+		reader, err := ranger.NewReader(
+			&ranger.HTTPRanger{
+				URL:    u,
+				Client: DefaultClient,
+			},
+		)
 
-	zipReader, err := zip.NewReader(reader, reader.Length())
+		if err != nil {
+			return err
+		}
 
-	if err != nil {
-		return err
+		zipReader, err = zip.NewReader(reader, reader.Length())
+
+		if err == zip.ErrFormat && downloadCount != MaxDownloadTries {
+			log.Printf("Caught error, %s, trying again (%d of %d)", err, downloadCount, MaxDownloadTries)
+			continue
+		} else if err != nil {
+			return err
+		} else { // err == nil
+			break
+		}
 	}
 
 	for _, f := range zipReader.File {
