@@ -22,14 +22,14 @@ type OTAFirmware struct {
 	Version               string       `plist:"OSVersion"`
 	PrerequisiteBuild     string       `plist:"PrerequisiteBuild"`
 	PrerequisiteOSVersion string       `plist:"PrerequisiteOSVersion"`
-	ReleaseType           string       `plist:"ReleaseType,omitempty"`
+	ReleaseType           string       `plist:"ReleaseType"`
 	DocumentationID       string       `plist:"SUDocumentationID"`
 	SupportedDevices      []Identifier `plist:"SupportedDevices"`
 	DownloadSize          int          `plist:"_DownloadSize"`
 	UnarchivedSize        int          `plist:"_UnarchivedSize"`
 	BaseURL               string       `plist:"__BaseURL"`
 	RelativePath          string       `plist:"__RelativePath"`
-	MarketingVersion      string       `plist:"MarketingVersion,omitempty"` // for watches
+	MarketingVersion      string       `plist:"MarketingVersion"` // for watches
 }
 
 func (o *OTAFirmware) GetURL() string {
