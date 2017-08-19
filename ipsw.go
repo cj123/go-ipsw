@@ -171,6 +171,10 @@ func (i *IPSW) BuildManifest() (*BuildManifest, error) {
 
 	err := i.plistFromZip(BuildManifestFilename, &manifest)
 
+	if err != nil {
+		return nil, err
+	}
+
 	i.manifest = &manifest
 
 	return &manifest, err
@@ -184,6 +188,10 @@ func (i *IPSW) RestorePlist() (*Restore, error) {
 	var restore Restore
 
 	err := i.plistFromZip(RestoreFilename, &restore)
+
+	if err != nil {
+		return nil, err
+	}
 
 	i.restore = &restore
 
