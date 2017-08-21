@@ -79,7 +79,7 @@ type BuildIdentity struct {
 	BbFDRSecurityKeyHash               []byte
 	Info                               BuildIdentityInfo
 	Manifest                           BuildIdentityManifest `plist:"Manifest"`
-	RawManifest                        interface{}           `plist:"Manifest"`
+	// RawManifest                        interface{}           `plist:"Manifest"`
 	UniqueBuildID                      []byte
 	BbSkeyId                           []byte
 }
