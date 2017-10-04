@@ -7,11 +7,11 @@ import (
 	"net/http"
 )
 
-type Client struct {
+type client struct {
 	Base string
 }
 
-func (c *Client) MakeRequest(url string, output interface{}, headers map[string]string) (*http.Response, error) {
+func (c *client) MakeRequest(url string, output interface{}, headers map[string]string) (*http.Response, error) {
 	request, err := http.NewRequest("GET", c.Base+url, nil)
 
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *Client) MakeRequest(url string, output interface{}, headers map[string]
 	}
 
 	if res.StatusCode > 400 {
-		return nil, fmt.Errorf("Invalid status code observed (%d) for URL: %s", res.StatusCode, url)
+		return nil, fmt.Errorf("api: invalid status code observed (%d) for URL: %s", res.StatusCode, url)
 	}
 
 	if output != nil {

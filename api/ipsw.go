@@ -9,23 +9,51 @@ import (
 )
 
 type ipswClient struct {
-	Client
+	client
 }
 
+// ReleaseType represents a release type
 type ReleaseType string
 
-const (
-	ReleaseTypeiOS        ReleaseType = "iOS"
-	ReleaseTypeDevice     ReleaseType = "Device"
-	ReleaseTypeRedsn0w    ReleaseType = "redsn0w"
-	ReleaseTypePwnageTool ReleaseType = "PwnageTool"
-	ReleaseTypeiTunes     ReleaseType = "iTunes"
-	ReleaseTypeiOSOTA     ReleaseType = "iOS OTA"
-	ReleaseTypewatchOS    ReleaseType = "watchOS"
-	ReleaseTypeSigning    ReleaseType = "shsh"
+var (
+	// ErrFirmwaresNotFound occurs when no firmwares are found for an identifier/build combination
+	ErrFirmwaresNotFound = errors.New("api: no firmwares found")
+
+	// ErrInvalidDevice occurs when an incorrect device is specified
+	ErrInvalidDevice = errors.New("api: invalid device specified")
+
+	latestAPIBase = "https://api.ipsw.me/v3"
 )
 
+const (
+	// ReleaseTypeiOS is an iOS release
+	ReleaseTypeiOS ReleaseType = "iOS"
+
+	// ReleaseTypeDevice is a device release
+	ReleaseTypeDevice ReleaseType = "Device"
+
+	// ReleaseTypeRedsn0w is a redsn0w release
+	ReleaseTypeRedsn0w ReleaseType = "redsn0w"
+
+	// ReleaseTypePwnageTool is a PwnageTool release
+	ReleaseTypePwnageTool ReleaseType = "PwnageTool"
+
+	// ReleaseTypeiTunes is an iTunes release
+	ReleaseTypeiTunes ReleaseType = "iTunes"
+
+	// ReleaseTypeiOSOTA is an OTA release
+	ReleaseTypeiOSOTA ReleaseType = "iOS OTA"
+
+	// ReleaseTypewatchOS is a watchOS release
+	ReleaseTypewatchOS ReleaseType = "watchOS"
+
+	// ReleaseTypeSigning is a signing change to an iOS firmware
+	ReleaseTypeSigning ReleaseType = "shsh"
+)
+
+// IPSWClient is a client which interfaces with the IPSW Downloads API
 type IPSWClient interface {
+	All() (*FirmwaresJSON, error)
 	VersionInformation(version string) ([]Firmware, error)
 	DeviceInformation(identifier string) (*Device, error)
 	DeviceName(identifier string) string
@@ -35,14 +63,39 @@ type IPSWClient interface {
 	URL(identifier, build string) (string, error)
 }
 
+// NewIPSWClientLatest creates an IPSWClient using the latest API base
+func NewIPSWClientLatest() IPSWClient {
+	return NewIPSWClient(latestAPIBase)
+}
+
+// NewIPSWClient creates an IPSWClient with a given API base
 func NewIPSWClient(apiBase string) IPSWClient {
 	return &ipswClient{
-		Client{
+		client{
 			Base: apiBase,
 		},
 	}
 }
 
+// FirmwaresJSON represents all public non-beta IPSW files released by Apple
+type FirmwaresJSON struct {
+	Devices map[string]*Device `json:"devices"`
+}
+
+// All returns a FirmwaresJSON which contains all public non-beta IPSW files released by Apple
+func (c *ipswClient) All() (*FirmwaresJSON, error) {
+	var j FirmwaresJSON
+
+	_, err := c.MakeRequest("/firmwares.json", &j, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &j, err
+}
+
+// VersionInformation returns all firmwares with a given version
 func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
 	var versions []Firmware
 
@@ -55,6 +108,7 @@ func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
 	return versions, err
 }
 
+// Device is an iOS device released by Apple, and all available IPSW files for it.
 type Device struct {
 	Name        string     `json:"name"`
 	BoardConfig string     `json:"BoardConfig"`
@@ -64,6 +118,7 @@ type Device struct {
 	Firmwares   []Firmware `json:"firmwares"`
 }
 
+// DeviceInformation returns the device information for a given identifier
 func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
 	var deviceMap map[string]*Device
 
@@ -79,9 +134,10 @@ func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
 		}
 	}
 
-	return nil, errors.New("invalid device specified")
+	return nil, ErrInvalidDevice
 }
 
+// DeviceName returns the "user friendly" device name for an identifier, falling back to the identifier if there is an error
 func (c *ipswClient) DeviceName(identifier string) string {
 	res, err := c.MakeRequest(fmt.Sprintf("/%s/latest/name", identifier), nil, nil)
 
@@ -100,6 +156,7 @@ func (c *ipswClient) DeviceName(identifier string) string {
 	return string(buf)
 }
 
+// URL returns the download URL for a given identifier and build
 func (c *ipswClient) URL(identifier, build string) (string, error) {
 	res, err := c.MakeRequest(fmt.Sprintf("/%s/%s/url", identifier, build), nil, nil)
 
@@ -118,6 +175,7 @@ func (c *ipswClient) URL(identifier, build string) (string, error) {
 	return string(buf), err
 }
 
+// Firmware represents everything known by IPSW Downloads about an IPSW file
 type Firmware struct {
 	Identifier  string    `json:"identifier"`
 	Version     string    `json:"version"`
@@ -125,7 +183,7 @@ type Firmware struct {
 	BuildID     string    `json:"buildid"`
 	SHA1Sum     string    `json:"sha1sum"`
 	MD5Sum      string    `json:"md5sum"`
-	Size        int       `json:"size"`
+	Size        uint64    `json:"size"`
 	UploadDate  time.Time `json:"uploaddate"`
 	ReleaseDate time.Time `json:"releasedate"`
 	URL         string    `json:"url"`
@@ -133,6 +191,7 @@ type Firmware struct {
 	Filename    string    `json:"filename"`
 }
 
+// FirmwareInformation returns information about the firmware represented by an identifier and build
 func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware, error) {
 	var firmware []Firmware
 
@@ -143,12 +202,13 @@ func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware,
 	}
 
 	if len(firmware) < 1 {
-		return nil, errors.New("No firmwares found")
+		return nil, ErrFirmwaresNotFound
 	}
 
 	return &firmware[0], err
 }
 
+// OTAFirmware represents an "over-the-air" firmware file
 type OTAFirmware struct {
 	Firmware
 	PrerequisiteVersion string `json:"prerequisiteversion"`
@@ -156,6 +216,7 @@ type OTAFirmware struct {
 	ReleaseType         string `json:"releasetype"`
 }
 
+// DeviceOrVersionOTAs gives OTAs for a device or identifier
 func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, error) {
 	var firmwares []OTAFirmware
 
@@ -164,6 +225,7 @@ func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, erro
 	return firmwares, err
 }
 
+// Release is an iOS/iTunes/... release detected by IPSW Downloads
 type Release struct {
 	Name  string      `json:"name"`
 	Date  time.Time   `json:"date"`
@@ -171,6 +233,7 @@ type Release struct {
 	Type  ReleaseType `json:"type"`
 }
 
+// ReleaseTimeline gets all releases by date known to IPSW Downloads
 func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
 	var releaseTimeline map[string][]Release
 
