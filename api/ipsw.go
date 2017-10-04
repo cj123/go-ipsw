@@ -53,13 +53,28 @@ const (
 
 // IPSWClient is a client which interfaces with the IPSW Downloads API
 type IPSWClient interface {
+	// All returns a FirmwaresJSON which contains all public non-beta IPSW files released by Apple
 	All() (*FirmwaresJSON, error)
+
+	// VersionInformation returns all firmwares with a given version
 	VersionInformation(version string) ([]Firmware, error)
+
+	// DeviceInformation returns the device information for a given identifier
 	DeviceInformation(identifier string) (*Device, error)
+
+	// DeviceName returns the "user friendly" device name for an identifier, falling back to the identifier if there is an error
 	DeviceName(identifier string) string
+
+	// FirmwareInformation returns information about the firmware represented by an identifier and build
 	FirmwareInformation(identifier, buildid string) (*Firmware, error)
+
+	// DeviceOrVersionOTAs gives OTAs for a device or identifier
 	DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, error)
+
+	// ReleaseTimeline gets all releases by date known to IPSW Downloads
 	ReleaseTimeline() (map[string][]Release, error)
+
+	// URL returns the download URL for a given identifier and build
 	URL(identifier, build string) (string, error)
 }
 
@@ -82,7 +97,6 @@ type FirmwaresJSON struct {
 	Devices map[string]*Device `json:"devices"`
 }
 
-// All returns a FirmwaresJSON which contains all public non-beta IPSW files released by Apple
 func (c *ipswClient) All() (*FirmwaresJSON, error) {
 	var j FirmwaresJSON
 
@@ -95,7 +109,6 @@ func (c *ipswClient) All() (*FirmwaresJSON, error) {
 	return &j, err
 }
 
-// VersionInformation returns all firmwares with a given version
 func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
 	var versions []Firmware
 
@@ -118,7 +131,6 @@ type Device struct {
 	Firmwares   []Firmware `json:"firmwares"`
 }
 
-// DeviceInformation returns the device information for a given identifier
 func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
 	var deviceMap map[string]*Device
 
@@ -137,7 +149,6 @@ func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
 	return nil, ErrInvalidDevice
 }
 
-// DeviceName returns the "user friendly" device name for an identifier, falling back to the identifier if there is an error
 func (c *ipswClient) DeviceName(identifier string) string {
 	res, err := c.MakeRequest(fmt.Sprintf("/%s/latest/name", identifier), nil, nil)
 
@@ -156,7 +167,6 @@ func (c *ipswClient) DeviceName(identifier string) string {
 	return string(buf)
 }
 
-// URL returns the download URL for a given identifier and build
 func (c *ipswClient) URL(identifier, build string) (string, error) {
 	res, err := c.MakeRequest(fmt.Sprintf("/%s/%s/url", identifier, build), nil, nil)
 
@@ -191,7 +201,6 @@ type Firmware struct {
 	Filename    string    `json:"filename"`
 }
 
-// FirmwareInformation returns information about the firmware represented by an identifier and build
 func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware, error) {
 	var firmware []Firmware
 
@@ -216,7 +225,6 @@ type OTAFirmware struct {
 	ReleaseType         string `json:"releasetype"`
 }
 
-// DeviceOrVersionOTAs gives OTAs for a device or identifier
 func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, error) {
 	var firmwares []OTAFirmware
 
@@ -233,7 +241,6 @@ type Release struct {
 	Type  ReleaseType `json:"type"`
 }
 
-// ReleaseTimeline gets all releases by date known to IPSW Downloads
 func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
 	var releaseTimeline map[string][]Release
 
