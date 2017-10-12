@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/cj123/ranger"
+	"github.com/DHowett/ranger"
 )
 
 var MaxDownloadTries = 10
@@ -62,7 +62,13 @@ func DownloadFile(resource, file string, w io.Writer) error {
 			return err
 		}
 
-		zipReader, err = zip.NewReader(reader, reader.Length())
+		readerLen, err := reader.Length()
+
+		if err != nil {
+			return err
+		}
+
+		zipReader, err = zip.NewReader(reader, readerLen)
 
 		if err == zip.ErrFormat && downloadCount != MaxDownloadTries {
 			log.Printf("Caught error, %s, trying again (%d of %d)", err, downloadCount, MaxDownloadTries)
