@@ -9,7 +9,7 @@ import (
 	"regexp"
 
 	"github.com/cj123/go-ipsw/api"
-	"github.com/dhowett/go-plist"
+	"github.com/DHowett/go-plist"
 )
 
 const (
@@ -51,7 +51,7 @@ func (r *Restore) DeviceByIdentifier(identifier Identifier) (*Device, error) {
 		if r.ProductType == identifier {
 			device = r.Devices[0]
 		} else {
-			return nil, fmt.Errorf("Unable to find identifier: %s in Restore.plist", identifier)
+			return nil, fmt.Errorf("ipsw: unable to find identifier: %s in Restore.plist", identifier)
 		}
 	}
 
@@ -80,8 +80,8 @@ type BuildIdentity struct {
 	Info                               BuildIdentityInfo
 	Manifest                           BuildIdentityManifest `plist:"Manifest"`
 	// RawManifest                        interface{}           `plist:"Manifest"`
-	UniqueBuildID                      []byte
-	BbSkeyId                           []byte
+	UniqueBuildID []byte
+	BbSkeyId      []byte
 }
 
 type BuildIdentityInfo struct {
@@ -123,7 +123,7 @@ func NewIPSWWithIdentifierBuild(client api.IPSWClient, identifier, build string)
 	if err != nil {
 		return nil, err
 	} else if resource == "" {
-		return nil, errors.New("IPSW not found (potentially beta)")
+		return nil, errors.New("ipsw: firmware not found (potentially beta)")
 	}
 
 	return NewIPSW(identifier, build, resource), nil
@@ -216,13 +216,13 @@ func (i IPSW) Baseband() (string, error) {
 	}
 
 	if productIndex == -1 {
-		return "", errors.New("pwn: unable to find identifier in given IPSW")
+		return "", errors.New("ipsw: unable to find identifier in given IPSW")
 	}
 
 	baseband, ok := manifest.BuildIdentities[productIndex].Manifest["BasebandFirmware"]
 
 	if !ok {
-		return "", errors.New("pwn: baseband not found in IPSW")
+		return "", errors.New("ipsw: baseband not found in IPSW")
 	}
 
 	return basebandRegex.FindString(baseband.Info.Path), nil
