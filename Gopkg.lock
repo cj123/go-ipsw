@@ -3,19 +3,19 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/DHowett/go-plist"
+  name = "howett.net/plist"
   packages = ["."]
-  revision = "2f847ea62b17703c861484a09f0e5841328a2cb9"
+  revision = "f00f32b327ca6ad11a7c53d9ccc34d031b3795b8"
 
 [[projects]]
   branch = "master"
-  name = "github.com/DHowett/ranger"
+  name = "howett.net/ranger"
   packages = ["."]
-  revision = "b7738d75f1a66ec8f11205f495ebc9d13c3d02c2"
+  revision = "e2e137620847062fc5c81aba252b1a1783862503"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0005787b2895b3eab850e8a358f1fda66e4a9d875b54ed7749f0f1d67e35f70a"
+  inputs-digest = "861fa25a5fad0f15b1f9af80a899f3527f2e83fe1a9cca69076fbf6d62f61cbe"
   solver-name = "gps-cdcl"
   solver-version = 1

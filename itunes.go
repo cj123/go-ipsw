@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"strings"
 
-	"github.com/DHowett/go-plist"
+	"howett.net/plist"
 )
 
 type BuildNumber string

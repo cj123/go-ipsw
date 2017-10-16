@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/DHowett/go-plist"
+	"howett.net/plist"
 )
 
 const OTABuildManifestFilename = "AssetData/boot/BuildManifest.plist"

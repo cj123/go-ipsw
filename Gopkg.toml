@@ -23,8 +23,8 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/DHowett/ranger"
+  name = "howett.net/ranger"
 
 [[constraint]]
   branch = "master"
-  name = "github.com/DHowett/go-plist"
+  name = "howett.net/plist"
