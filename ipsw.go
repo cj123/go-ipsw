@@ -9,7 +9,7 @@ import (
 	"regexp"
 
 	"github.com/cj123/go-ipsw/api"
-	"github.com/DHowett/go-plist"
+	"howett.net/plist"
 )
 
 const (

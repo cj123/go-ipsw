@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/DHowett/ranger"
+	"howett.net/ranger"
 )
 
 var MaxDownloadTries = 10
