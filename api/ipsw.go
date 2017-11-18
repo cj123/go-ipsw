@@ -23,6 +23,8 @@ var (
 	ErrInvalidDevice = errors.New("api: invalid device specified")
 
 	latestAPIBase = "https://api.ipsw.me/v3"
+
+	ipswDownloadsBase = "https://ipsw.me"
 )
 
 const (
@@ -76,6 +78,9 @@ type IPSWClient interface {
 
 	// URL returns the download URL for a given identifier and build
 	URL(identifier, build string) (string, error)
+
+	// DeviceImage returns the URL to the device image for the given identifier
+	DeviceImage(identifier string) string
 }
 
 // NewIPSWClientLatest creates an IPSWClient using the latest API base
@@ -215,6 +220,10 @@ func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware,
 	}
 
 	return &firmware[0], err
+}
+
+func (c *ipswClient) DeviceImage(identifier string) string {
+	return fmt.Sprintf("%s/api/images/320x/assets/images/devices/%s.png", ipswDownloadsBase, identifier)
 }
 
 // OTAFirmware represents an "over-the-air" firmware file
