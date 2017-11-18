@@ -101,12 +101,13 @@ type ManifestInfo struct {
 }
 
 type IPSW struct {
-	Identifier string
-	BuildID    string
-	Resource   string
-	manifest   *BuildManifest
-	restore    *Restore
-	headers    http.Header
+	Identifier  string
+	BuildID     string
+	Resource    string
+	manifest    *BuildManifest
+	rawManifest map[string]interface{}
+	restore     *Restore
+	headers     http.Header
 }
 
 func NewIPSW(identifier, build, resource string) *IPSW {
@@ -178,6 +179,24 @@ func (i *IPSW) BuildManifest() (*BuildManifest, error) {
 	i.manifest = &manifest
 
 	return &manifest, err
+}
+
+func (i *IPSW) RawManifest() (map[string]interface{}, error) {
+	if i.rawManifest != nil {
+		return i.rawManifest, nil
+	}
+
+	var manifest map[string]interface{}
+
+	err := i.plistFromZip(BuildManifestFilename, &manifest)
+
+	if err != nil {
+		return nil, err
+	}
+
+	i.rawManifest = manifest
+
+	return manifest, err
 }
 
 func (i *IPSW) RestorePlist() (*Restore, error) {
