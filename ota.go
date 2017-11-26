@@ -110,7 +110,7 @@ func (z *OTAZip) BuildManifest() (*OTABuildManifest, error) {
 
 	var manifest OTABuildManifest
 
-	err := z.plistFromZip(OTABuildManifestFilename, &manifest)
+	err := z.PlistFromZip(OTABuildManifestFilename, &manifest)
 
 	z.manifest = &manifest
 

@@ -130,7 +130,7 @@ func NewIPSWWithIdentifierBuild(client api.IPSWClient, identifier, build string)
 	return NewIPSW(identifier, build, resource), nil
 }
 
-func (i *IPSW) plistFromZip(name string, out interface{}) error {
+func (i *IPSW) PlistFromZip(name string, out interface{}) error {
 	buf := new(bytes.Buffer)
 	writer := bufio.NewWriter(buf)
 
@@ -170,7 +170,7 @@ func (i *IPSW) BuildManifest() (*BuildManifest, error) {
 
 	var manifest BuildManifest
 
-	err := i.plistFromZip(BuildManifestFilename, &manifest)
+	err := i.PlistFromZip(BuildManifestFilename, &manifest)
 
 	if err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func (i *IPSW) RawManifest() (map[string]interface{}, error) {
 
 	var manifest map[string]interface{}
 
-	err := i.plistFromZip(BuildManifestFilename, &manifest)
+	err := i.PlistFromZip(BuildManifestFilename, &manifest)
 
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (i *IPSW) RestorePlist() (*Restore, error) {
 
 	var restore Restore
 
-	err := i.plistFromZip(RestoreFilename, &restore)
+	err := i.PlistFromZip(RestoreFilename, &restore)
 
 	if err != nil {
 		return nil, err
