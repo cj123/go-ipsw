@@ -81,6 +81,9 @@ type IPSWClient interface {
 
 	// DeviceImage returns the URL to the device image for the given identifier
 	DeviceImage(identifier string) string
+
+	// Devices returns all devices known to IPSW Downloads
+	Devices() (map[string]string, error)
 }
 
 // NewIPSWClientLatest creates an IPSWClient using the latest API base
@@ -224,6 +227,18 @@ func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware,
 
 func (c *ipswClient) DeviceImage(identifier string) string {
 	return fmt.Sprintf("%s/api/images/320x/assets/images/devices/%s.png", ipswDownloadsBase, identifier)
+}
+
+func (c *ipswClient) Devices() (map[string]string, error) {
+	var devices map[string]string
+
+	_, err := c.MakeRequest("/device", &devices, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return devices, err
 }
 
 // OTAFirmware represents an "over-the-air" firmware file
