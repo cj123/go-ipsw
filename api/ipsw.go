@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"gopkg.in/guregu/null.v3"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -203,7 +204,7 @@ type Firmware struct {
 	MD5Sum      string    `json:"md5sum"`
 	Size        uint64    `json:"size"`
 	UploadDate  time.Time `json:"uploaddate"`
-	ReleaseDate time.Time `json:"releasedate"`
+	ReleaseDate null.Time `json:"releasedate"`
 	URL         string    `json:"url"`
 	Signed      bool      `json:"signed"`
 	Filename    string    `json:"filename"`
