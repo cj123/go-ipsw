@@ -85,6 +85,9 @@ type IPSWClient interface {
 
 	// Devices returns all devices known to IPSW Downloads
 	Devices() (map[string]string, error)
+
+	// Watches gets device information and OTAFirmwares for all Apple Watches
+	Watches() (map[string]*OTADevice, error)
 }
 
 // NewIPSWClientLatest creates an IPSWClient using the latest API base
@@ -130,14 +133,24 @@ func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
 	return versions, err
 }
 
+type device struct {
+	Name        string `json:"name"`
+	BoardConfig string `json:"BoardConfig"`
+	Platform    string `json:"platform"`
+	CPID        int    `json:"cpid"`
+	BDID        int    `json:"bdid"`
+}
+
 // Device is an iOS device released by Apple, and all available IPSW files for it.
 type Device struct {
-	Name        string     `json:"name"`
-	BoardConfig string     `json:"BoardConfig"`
-	Platform    string     `json:"platform"`
-	CPID        int        `json:"cpid"`
-	BDID        int        `json:"bdid"`
-	Firmwares   []Firmware `json:"firmwares"`
+	device
+	Firmwares []Firmware `json:"firmwares"`
+}
+
+// Device is an iOS device released by Apple, and all available OTA files for it.
+type OTADevice struct {
+	device
+	Firmwares []OTAFirmware `json:"firmwares"`
 }
 
 func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
@@ -203,7 +216,7 @@ type Firmware struct {
 	SHA1Sum     string    `json:"sha1sum"`
 	MD5Sum      string    `json:"md5sum"`
 	Size        uint64    `json:"size"`
-	UploadDate  time.Time `json:"uploaddate"`
+	UploadDate  null.Time `json:"uploaddate"`
 	ReleaseDate null.Time `json:"releasedate"`
 	URL         string    `json:"url"`
 	Signed      bool      `json:"signed"`
@@ -272,4 +285,16 @@ func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
 	_, err := c.MakeRequest("/timeline", &releaseTimeline, nil)
 
 	return releaseTimeline, err
+}
+
+func (c *ipswClient) Watches() (map[string]*OTADevice, error) {
+	var watches map[string]*OTADevice
+
+	_, err := c.MakeRequest("/watch.json", &watches, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return watches, err
 }
