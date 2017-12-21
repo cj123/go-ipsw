@@ -86,8 +86,11 @@ type IPSWClient interface {
 	// Devices returns all devices known to IPSW Downloads
 	Devices() (map[string]string, error)
 
-	// Watches gets device information and OTAFirmwares for all Apple Watches
+	// Watches returns all watches and associated OTAFirmwares
 	Watches() (map[string]*OTADevice, error)
+
+	// ITunes returns all iTunes releases.
+	ITunes() (map[string][]*ITunes, error)
 }
 
 // NewIPSWClientLatest creates an IPSWClient using the latest API base
@@ -269,6 +272,23 @@ func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, erro
 	_, err := c.MakeRequest(fmt.Sprintf("/otas/%s", identifier), &firmwares, nil)
 
 	return firmwares, err
+}
+
+// ITunes represents an iTunes download.
+type ITunes struct {
+	Version         string    `json:"version"`
+	UploadDate      null.Time `json:"uploaddate"`
+	ReleaseDate     null.Time `json:"releasedate"`
+	URL             string    `json:"url"`
+	SixtyFourBitURL string    `json:"64biturl"`
+}
+
+func (c *ipswClient) ITunes() (map[string][]*ITunes, error) {
+	var itunes map[string][]*ITunes
+
+	_, err := c.MakeRequest("/itunes.json", &itunes, nil)
+
+	return itunes, err
 }
 
 // Release is an iOS/iTunes/... release detected by IPSW Downloads
