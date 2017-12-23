@@ -136,7 +136,7 @@ func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
 	return versions, err
 }
 
-type device struct {
+type BaseDevice struct {
 	Name        string `json:"name"`
 	BoardConfig string `json:"BoardConfig"`
 	Platform    string `json:"platform"`
@@ -146,13 +146,13 @@ type device struct {
 
 // Device is an iOS device released by Apple, and all available IPSW files for it.
 type Device struct {
-	device
+	BaseDevice
 	Firmwares []Firmware `json:"firmwares"`
 }
 
 // Device is an iOS device released by Apple, and all available OTA files for it.
 type OTADevice struct {
-	device
+	BaseDevice
 	Firmwares []OTAFirmware `json:"firmwares"`
 }
 
