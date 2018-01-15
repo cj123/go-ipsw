@@ -50,11 +50,15 @@ func NewKeysClient(apiBase string) KeysClient {
 func (c *keysClient) Devices() ([]string, error) {
 	var devices []string
 
-	_, err := c.MakeRequest("/list", &devices, nil)
+	resp, err := c.MakeRequest("/list", nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &devices)
 
 	return devices, err
 }
@@ -63,11 +67,15 @@ func (c *keysClient) Devices() ([]string, error) {
 func (c *keysClient) Firmwares(device string) ([]FirmwareInfo, error) {
 	var firmwares []FirmwareInfo
 
-	_, err := c.MakeRequest("/device/"+device, &firmwares, nil)
+	resp, err := c.MakeRequest("/device/"+device, nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &firmwares)
 
 	return firmwares, err
 }
@@ -76,11 +84,15 @@ func (c *keysClient) Firmwares(device string) ([]FirmwareInfo, error) {
 func (c *keysClient) Keys(identifier, buildid string) (*FirmwareInfo, error) {
 	var firmware FirmwareInfo
 
-	_, err := c.MakeRequest("/firmware/"+identifier+"/"+buildid, &firmware, nil)
+	resp, err := c.MakeRequest("/firmware/"+identifier+"/"+buildid, nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &firmware)
 
 	return &firmware, err
 }

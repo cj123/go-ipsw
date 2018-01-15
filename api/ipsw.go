@@ -115,11 +115,15 @@ type FirmwaresJSON struct {
 func (c *ipswClient) All() (*FirmwaresJSON, error) {
 	var j FirmwaresJSON
 
-	_, err := c.MakeRequest("/firmwares.json", &j, nil)
+	resp, err := c.MakeRequest("/firmwares.json", nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &j)
 
 	return &j, err
 }
@@ -127,11 +131,15 @@ func (c *ipswClient) All() (*FirmwaresJSON, error) {
 func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
 	var versions []Firmware
 
-	_, err := c.MakeRequest(fmt.Sprintf("/version/%s", version), &versions, nil)
+	resp, err := c.MakeRequest(fmt.Sprintf("/version/%s", version), nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &versions)
 
 	return versions, err
 }
@@ -159,7 +167,15 @@ type OTADevice struct {
 func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
 	var deviceMap map[string]*Device
 
-	_, err := c.MakeRequest(fmt.Sprintf("/device/%s", identifier), &deviceMap, nil)
+	resp, err := c.MakeRequest(fmt.Sprintf("/device/%s", identifier), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &deviceMap)
 
 	if err != nil {
 		return nil, err
@@ -175,7 +191,7 @@ func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
 }
 
 func (c *ipswClient) DeviceName(identifier string) string {
-	res, err := c.MakeRequest(fmt.Sprintf("/%s/latest/name", identifier), nil, nil)
+	res, err := c.MakeRequest(fmt.Sprintf("/%s/latest/name", identifier), nil)
 
 	if err != nil {
 		return identifier
@@ -193,7 +209,7 @@ func (c *ipswClient) DeviceName(identifier string) string {
 }
 
 func (c *ipswClient) URL(identifier, build string) (string, error) {
-	res, err := c.MakeRequest(fmt.Sprintf("/%s/%s/url", identifier, build), nil, nil)
+	res, err := c.MakeRequest(fmt.Sprintf("/%s/%s/url", identifier, build), nil)
 
 	if err != nil {
 		return "", err
@@ -229,7 +245,15 @@ type Firmware struct {
 func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware, error) {
 	var firmware []Firmware
 
-	_, err := c.MakeRequest(fmt.Sprintf("/%s/%s/info.json", identifier, buildid), &firmware, nil)
+	resp, err := c.MakeRequest(fmt.Sprintf("/%s/%s/info.json", identifier, buildid), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &firmware)
 
 	if err != nil {
 		return nil, err
@@ -249,11 +273,15 @@ func (c *ipswClient) DeviceImage(identifier string) string {
 func (c *ipswClient) Devices() (map[string]string, error) {
 	var devices map[string]string
 
-	_, err := c.MakeRequest("/device", &devices, nil)
+	resp, err := c.MakeRequest("/device", nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &devices)
 
 	return devices, err
 }
@@ -269,7 +297,15 @@ type OTAFirmware struct {
 func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, error) {
 	var firmwares []OTAFirmware
 
-	_, err := c.MakeRequest(fmt.Sprintf("/otas/%s", identifier), &firmwares, nil)
+	resp, err := c.MakeRequest(fmt.Sprintf("/otas/%s", identifier), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &firmwares)
 
 	return firmwares, err
 }
@@ -286,7 +322,15 @@ type ITunes struct {
 func (c *ipswClient) ITunes() (map[string][]*ITunes, error) {
 	var itunes map[string][]*ITunes
 
-	_, err := c.MakeRequest("/itunes.json", &itunes, nil)
+	resp, err := c.MakeRequest("/itunes.json", nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &itunes)
 
 	return itunes, err
 }
@@ -302,7 +346,15 @@ type Release struct {
 func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
 	var releaseTimeline map[string][]Release
 
-	_, err := c.MakeRequest("/timeline", &releaseTimeline, nil)
+	resp, err := c.MakeRequest("/timeline", nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &releaseTimeline)
 
 	return releaseTimeline, err
 }
@@ -310,11 +362,14 @@ func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
 func (c *ipswClient) Watches() (map[string]*OTADevice, error) {
 	var watches map[string]*OTADevice
 
-	_, err := c.MakeRequest("/watch.json", &watches, nil)
+	resp, err := c.MakeRequest("/watch.json", nil)
 
 	if err != nil {
 		return nil, err
 	}
+
+	defer resp.Body.Close()
+	err = parseJSON(resp, &watches)
 
 	return watches, err
 }

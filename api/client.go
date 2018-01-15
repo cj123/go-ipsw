@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -11,7 +10,9 @@ type client struct {
 	Base string
 }
 
-func (c *client) MakeRequest(url string, output interface{}, headers map[string]string) (*http.Response, error) {
+// MakeRequest makes the http request to a given endpoint, optionally unmarshalling json into the response body.
+// note: MakeRequest does not call resp.Body.Close(), this must be done manually
+func (c *client) MakeRequest(url string, headers map[string]string) (*http.Response, error) {
 	request, err := http.NewRequest("GET", c.Base+url, nil)
 
 	if err != nil {
@@ -30,20 +31,16 @@ func (c *client) MakeRequest(url string, output interface{}, headers map[string]
 		return nil, err
 	}
 
-	if res.StatusCode > 400 {
-		return nil, fmt.Errorf("api: invalid status code observed (%d) for URL: %s", res.StatusCode, url)
-	}
-
-	if output != nil {
-		buf := new(bytes.Buffer)
-		_, err = buf.ReadFrom(res.Body)
-
-		if err != nil {
-			return nil, err
-		}
-
-		err = json.Unmarshal(buf.Bytes(), &output)
-	}
-
 	return res, err
+}
+
+func parseJSON(res *http.Response, output interface{}) error {
+	buf := new(bytes.Buffer)
+	_, err := buf.ReadFrom(res.Body)
+
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(buf.Bytes(), &output)
 }
