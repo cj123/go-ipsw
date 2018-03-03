@@ -1,32 +1,16 @@
 package api
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"gopkg.in/guregu/null.v3"
-	"io/ioutil"
-	"strings"
+	"net/http"
 	"time"
-)
 
-type ipswClient struct {
-	client
-}
+	"gopkg.in/guregu/null.v3"
+)
 
 // ReleaseType represents a release type
 type ReleaseType string
-
-var (
-	// ErrFirmwaresNotFound occurs when no firmwares are found for an identifier/build combination
-	ErrFirmwaresNotFound = errors.New("api: no firmwares found")
-
-	// ErrInvalidDevice occurs when an incorrect device is specified
-	ErrInvalidDevice = errors.New("api: invalid device specified")
-
-	latestAPIBase = "https://api.ipsw.me/v3"
-
-	ipswDownloadsBase = "https://ipsw.me"
-)
 
 const (
 	// ReleaseTypeiOS is an iOS release
@@ -54,97 +38,8 @@ const (
 	ReleaseTypeSigning ReleaseType = "shsh"
 )
 
-// IPSWClient is a client which interfaces with the IPSW Downloads API
-type IPSWClient interface {
-	// All returns a FirmwaresJSON which contains all public non-beta IPSW files released by Apple
-	All() (*FirmwaresJSON, error)
-
-	// VersionInformation returns all firmwares with a given version
-	VersionInformation(version string) ([]Firmware, error)
-
-	// DeviceInformation returns the device information for a given identifier
-	DeviceInformation(identifier string) (*Device, error)
-
-	// DeviceName returns the "user friendly" device name for an identifier, falling back to the identifier if there is an error
-	DeviceName(identifier string) string
-
-	// FirmwareInformation returns information about the firmware represented by an identifier and build
-	FirmwareInformation(identifier, buildid string) (*Firmware, error)
-
-	// DeviceOrVersionOTAs gives OTAs for a device or identifier
-	DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, error)
-
-	// ReleaseTimeline gets all releases by date known to IPSW Downloads
-	ReleaseTimeline() (map[string][]Release, error)
-
-	// URL returns the download URL for a given identifier and build
-	URL(identifier, build string) (string, error)
-
-	// DeviceImage returns the URL to the device image for the given identifier
-	DeviceImage(identifier string) string
-
-	// Devices returns all devices known to IPSW Downloads
-	Devices() (map[string]string, error)
-
-	// Watches returns all watches and associated OTAFirmwares
-	Watches() (map[string]*OTADevice, error)
-
-	// ITunes returns all iTunes releases.
-	ITunes() (map[string][]*ITunes, error)
-}
-
-// NewIPSWClientLatest creates an IPSWClient using the latest API base
-func NewIPSWClientLatest() IPSWClient {
-	return NewIPSWClient(latestAPIBase)
-}
-
-// NewIPSWClient creates an IPSWClient with a given API base
-func NewIPSWClient(apiBase string) IPSWClient {
-	return &ipswClient{
-		client{
-			Base: apiBase,
-		},
-	}
-}
-
-// FirmwaresJSON represents all public non-beta IPSW files released by Apple
-type FirmwaresJSON struct {
-	Devices map[string]*Device `json:"devices"`
-}
-
-func (c *ipswClient) All() (*FirmwaresJSON, error) {
-	var j FirmwaresJSON
-
-	resp, err := c.MakeRequest("/firmwares.json", nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	err = parseJSON(resp, &j)
-
-	return &j, err
-}
-
-func (c *ipswClient) VersionInformation(version string) ([]Firmware, error) {
-	var versions []Firmware
-
-	resp, err := c.MakeRequest(fmt.Sprintf("/version/%s", version), nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	err = parseJSON(resp, &versions)
-
-	return versions, err
-}
-
 type BaseDevice struct {
+	Identifier  string `json:"identifier"`
 	Name        string `json:"name"`
 	BoardConfig string `json:"BoardConfig"`
 	Platform    string `json:"platform"`
@@ -164,68 +59,6 @@ type OTADevice struct {
 	Firmwares []OTAFirmware `json:"firmwares"`
 }
 
-func (c *ipswClient) DeviceInformation(identifier string) (*Device, error) {
-	var deviceMap map[string]*Device
-
-	resp, err := c.MakeRequest(fmt.Sprintf("/device/%s", identifier), nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
-	err = parseJSON(resp, &deviceMap)
-
-	if err != nil {
-		return nil, err
-	}
-
-	for mapIdentifier, device := range deviceMap {
-		if strings.ToLower(mapIdentifier) == strings.ToLower(identifier) {
-			return device, nil
-		}
-	}
-
-	return nil, ErrInvalidDevice
-}
-
-func (c *ipswClient) DeviceName(identifier string) string {
-	res, err := c.MakeRequest(fmt.Sprintf("/%s/latest/name", identifier), nil)
-
-	if err != nil {
-		return identifier
-	}
-
-	defer res.Body.Close()
-
-	buf, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return identifier
-	}
-
-	return string(buf)
-}
-
-func (c *ipswClient) URL(identifier, build string) (string, error) {
-	res, err := c.MakeRequest(fmt.Sprintf("/%s/%s/url", identifier, build), nil)
-
-	if err != nil {
-		return "", err
-	}
-
-	defer res.Body.Close()
-
-	buf, err := ioutil.ReadAll(res.Body)
-
-	if err != nil {
-		return "", err
-	}
-
-	return string(buf), err
-}
-
 // Firmware represents everything known by IPSW Downloads about an IPSW file
 type Firmware struct {
 	Identifier  string    `json:"identifier"`
@@ -234,46 +67,114 @@ type Firmware struct {
 	BuildID     string    `json:"buildid"`
 	SHA1Sum     string    `json:"sha1sum"`
 	MD5Sum      string    `json:"md5sum"`
-	Size        uint64    `json:"size"`
+	Filesize    uint64    `json:"filesize"`
 	UploadDate  null.Time `json:"uploaddate"`
 	ReleaseDate null.Time `json:"releasedate"`
 	URL         string    `json:"url"`
 	Signed      bool      `json:"signed"`
-	Filename    string    `json:"filename"`
 }
 
-func (c *ipswClient) FirmwareInformation(identifier, buildid string) (*Firmware, error) {
-	var firmware []Firmware
+// OTAFirmware represents an "over-the-air" firmware file
+type OTAFirmware struct {
+	Firmware
+	PrerequisiteVersion string `json:"prerequisiteversion"`
+	PrerequisiteBuildID string `json:"prerequisitebuildid"`
+	ReleaseType         string `json:"releasetype"`
+}
 
-	resp, err := c.MakeRequest(fmt.Sprintf("/%s/%s/info.json", identifier, buildid), nil)
+// ITunes represents an iTunes download.
+type ITunes struct {
+	Version         string    `json:"version"`
+	UploadDate      null.Time `json:"uploaddate"`
+	ReleaseDate     null.Time `json:"releasedate"`
+	URL             string    `json:"url"`
+	SixtyFourBitURL string    `json:"64biturl"`
+}
+
+type ReleasesByDate struct {
+	Date     string
+	Releases []Release
+}
+
+// Release is an iOS/iTunes/... release detected by IPSW Downloads
+type Release struct {
+	Name  string      `json:"name"`
+	Date  time.Time   `json:"date"`
+	Count int         `json:"count"`
+	Type  ReleaseType `json:"type"`
+}
+
+// FirmwareInfo is a representation of keys information known by IPSW Downloads
+type FirmwareInfo struct {
+	Identifier           string `json:"identifier"`
+	BuildID              string `json:"buildid"`
+	CodeName             string `json:"codename"`
+	Baseband             string `json:"baseband,omitempty"`
+	UpdateRamdiskExists  bool   `json:"updateramdiskexists"`
+	RestoreRamdiskExists bool   `json:"restoreramdiskexists"`
+
+	Keys []FirmwareKey `json:"keys,omitempty"`
+}
+
+// FirmwareKey is a key/iv combo for an individual firmware file
+type FirmwareKey struct {
+	Image    string    `json:"image"`
+	Filename string    `json:"filename"`
+	KBag     string    `json:"kbag"`
+	Key      string    `json:"key"`
+	IV       string    `json:"iv"`
+	Date     time.Time `json:"date"`
+}
+
+type IPSWClient struct {
+	client *http.Client
+	base   string
+}
+
+// NewIPSWClient creates an IPSWClient. If client == nil, http.DefaultClient is used.
+func NewIPSWClient(apiBase string, client *http.Client) *IPSWClient {
+	if client == nil {
+		client = http.DefaultClient
+	}
+
+	return &IPSWClient{
+		base:   apiBase,
+		client: client,
+	}
+}
+
+// makeRequest makes the http request to a given endpoint
+// note: makeRequest does not call resp.Body.Close(), this must be done manually
+func (c *IPSWClient) makeRequest(url string, headers map[string]string) (*http.Response, error) {
+	request, err := http.NewRequest("GET", c.base+url, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	request.Header.Add("Accept", "application/json")
 
-	err = parseJSON(resp, &firmware)
+	for key, val := range headers {
+		request.Header.Add(key, val)
+	}
+
+	res, err := c.client.Do(request)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if len(firmware) < 1 {
-		return nil, ErrFirmwaresNotFound
-	}
-
-	return &firmware[0], err
+	return res, err
 }
 
-func (c *ipswClient) DeviceImage(identifier string) string {
-	return fmt.Sprintf("%s/api/images/320x/assets/images/devices/%s.png", ipswDownloadsBase, identifier)
+func parseJSON(res *http.Response, output interface{}) error {
+	return json.NewDecoder(res.Body).Decode(&output)
 }
 
-func (c *ipswClient) Devices() (map[string]string, error) {
-	var devices map[string]string
+func (c *IPSWClient) Devices() ([]BaseDevice, error) {
+	var devices []BaseDevice
 
-	resp, err := c.MakeRequest("/device", nil)
+	resp, err := c.makeRequest("/devices", nil)
 
 	if err != nil {
 		return nil, err
@@ -286,18 +187,10 @@ func (c *ipswClient) Devices() (map[string]string, error) {
 	return devices, err
 }
 
-// OTAFirmware represents an "over-the-air" firmware file
-type OTAFirmware struct {
-	Firmware
-	PrerequisiteVersion string `json:"prerequisiteversion"`
-	PrerequisiteBuildID string `json:"prerequisitebuildid"`
-	ReleaseType         string `json:"releasetype"`
-}
+func (c *IPSWClient) DeviceInformation(identifier string) (*Device, error) {
+	var device *Device
 
-func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, error) {
-	var firmwares []OTAFirmware
-
-	resp, err := c.MakeRequest(fmt.Sprintf("/otas/%s", identifier), nil)
+	resp, err := c.makeRequest("/device/"+identifier, nil)
 
 	if err != nil {
 		return nil, err
@@ -305,24 +198,95 @@ func (c *ipswClient) DeviceOrVersionOTAs(identifier string) ([]OTAFirmware, erro
 
 	defer resp.Body.Close()
 
-	err = parseJSON(resp, &firmwares)
+	err = parseJSON(resp, &device)
 
-	return firmwares, err
+	return device, err
 }
 
-// ITunes represents an iTunes download.
-type ITunes struct {
-	Version         string    `json:"version"`
-	UploadDate      null.Time `json:"uploaddate"`
-	ReleaseDate     null.Time `json:"releasedate"`
-	URL             string    `json:"url"`
-	SixtyFourBitURL string    `json:"64biturl"`
+func (c *IPSWClient) OTADeviceInformation(identifier string) (*OTADevice, error) {
+	var device *OTADevice
+
+	resp, err := c.makeRequest("/device/"+identifier+"?type=ota", nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &device)
+
+	return device, err
 }
 
-func (c *ipswClient) ITunes() (map[string][]*ITunes, error) {
-	var itunes map[string][]*ITunes
+func (c *IPSWClient) IPSWInformation(identifier, buildid string) (*Firmware, error) {
+	var fw *Firmware
 
-	resp, err := c.MakeRequest("/itunes.json", nil)
+	resp, err := c.makeRequest(fmt.Sprintf("/ipsw/%s/%s", identifier, buildid), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &fw)
+
+	return fw, err
+}
+
+func (c *IPSWClient) OTAInformation(identifier, buildid, prerequisite string) (*OTAFirmware, error) {
+	var fw *OTAFirmware
+
+	resp, err := c.makeRequest(fmt.Sprintf("/ota/%s/%s", identifier, buildid), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &fw)
+
+	return fw, err
+}
+
+func (c *IPSWClient) IPSWsForVersion(version string) ([]Firmware, error) {
+	var fws []Firmware
+
+	resp, err := c.makeRequest("/ipsw/"+version, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &fws)
+
+	return fws, err
+}
+
+func (c *IPSWClient) OTAsForVersion(version string) ([]OTAFirmware, error) {
+	var fws []OTAFirmware
+
+	resp, err := c.makeRequest("/ota/"+version, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &fws)
+
+	return fws, err
+}
+
+func (c *IPSWClient) ITunes(platform string) ([]ITunes, error) {
+	var itunes []ITunes
+
+	resp, err := c.makeRequest("/itunes/"+platform, nil)
 
 	if err != nil {
 		return nil, err
@@ -335,18 +299,10 @@ func (c *ipswClient) ITunes() (map[string][]*ITunes, error) {
 	return itunes, err
 }
 
-// Release is an iOS/iTunes/... release detected by IPSW Downloads
-type Release struct {
-	Name  string      `json:"name"`
-	Date  time.Time   `json:"date"`
-	Count int         `json:"count"`
-	Type  ReleaseType `json:"type"`
-}
+func (c *IPSWClient) KeysList(identifier string) ([]FirmwareInfo, error) {
+	var info []FirmwareInfo
 
-func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
-	var releaseTimeline map[string][]Release
-
-	resp, err := c.MakeRequest("/timeline", nil)
+	resp, err := c.makeRequest("/keys/device/"+identifier, nil)
 
 	if err != nil {
 		return nil, err
@@ -354,22 +310,69 @@ func (c *ipswClient) ReleaseTimeline() (map[string][]Release, error) {
 
 	defer resp.Body.Close()
 
-	err = parseJSON(resp, &releaseTimeline)
+	err = parseJSON(resp, &info)
 
-	return releaseTimeline, err
+	return info, err
 }
 
-func (c *ipswClient) Watches() (map[string]*OTADevice, error) {
-	var watches map[string]*OTADevice
+func (c *IPSWClient) KeysForIPSW(identifier, buildid string) (*FirmwareInfo, error) {
+	var info *FirmwareInfo
 
-	resp, err := c.MakeRequest("/watch.json", nil)
+	resp, err := c.makeRequest(fmt.Sprintf("/keys/ipsw/%s/%s", identifier, buildid), nil)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer resp.Body.Close()
-	err = parseJSON(resp, &watches)
 
-	return watches, err
+	err = parseJSON(resp, &info)
+
+	return info, err
+}
+
+func (c *IPSWClient) ReleaseInformation() ([]ReleasesByDate, error) {
+	var releases []ReleasesByDate
+
+	resp, err := c.makeRequest("/releases", nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &releases)
+
+	return releases, err
+}
+
+type modelResponse struct {
+	Identifier string `json:"identifier"`
+}
+
+func (c *IPSWClient) IdentifyModel(model string) (string, error) {
+	var r modelResponse
+
+	resp, err := c.makeRequest("/model/"+model, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	err = parseJSON(resp, &r)
+
+	return r.Identifier, err
+}
+
+func (c *IPSWClient) URL(identifier, buildid string) (string, error) {
+	fw, err := c.IPSWInformation(identifier, buildid)
+
+	if err != nil {
+		return "", err
+	}
+
+	return fw.URL, nil
 }

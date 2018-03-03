@@ -118,7 +118,7 @@ func NewIPSW(identifier, build, resource string) *IPSW {
 	}
 }
 
-func NewIPSWWithIdentifierBuild(client api.IPSWClient, identifier, build string) (*IPSW, error) {
+func NewIPSWWithIdentifierBuild(client *api.IPSWClient, identifier, build string) (*IPSW, error) {
 	resource, err := client.URL(identifier, build)
 
 	if err != nil {
