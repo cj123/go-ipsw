@@ -171,10 +171,16 @@ func parseJSON(res *http.Response, output interface{}) error {
 	return json.NewDecoder(res.Body).Decode(&output)
 }
 
-func (c *IPSWClient) Devices() ([]BaseDevice, error) {
+func (c *IPSWClient) Devices(onlyShowDevicesWithKeys bool) ([]BaseDevice, error) {
 	var devices []BaseDevice
 
-	resp, err := c.makeRequest("/devices", nil)
+	requestURL := "/devices"
+
+	if onlyShowDevicesWithKeys {
+		requestURL += "?keysOnly=true"
+	}
+
+	resp, err := c.makeRequest(requestURL, nil)
 
 	if err != nil {
 		return nil, err
