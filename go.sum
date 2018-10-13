@@ -1,0 +1,6 @@
+gopkg.in/guregu/null.v3 v3.4.0 h1:AOpMtZ85uElRhQjEDsFx21BkXqFPwA7uoJukd4KErIs=
+gopkg.in/guregu/null.v3 v3.4.0/go.mod h1:E4tX2Qe3h7QdL+uZ3a0vqvYwKQsRSQKM5V4YltdgH9Y=
+howett.net/plist v0.0.0-20171013062345-f00f32b327ca h1:0WpHLQ3akehp+PwVb7IU6YajknZGwqeab7MIV7QUMnk=
+howett.net/plist v0.0.0-20171013062345-f00f32b327ca/go.mod h1:jInWmjR7JRkkon4jlLXDZGVEeY/wo3kOOJEWYhNE+9Y=
+howett.net/ranger v0.0.0-20171016084633-e2e137620847 h1:jHX+2Sv8rQNb1nG2G9pcQLdVoWXBLW5fcd2gnfHluCU=
+howett.net/ranger v0.0.0-20171016084633-e2e137620847/go.mod h1:ZWGIG4mR6Ck+CdmFqK2/jox5vO2OAS8Qpb33HB8z0og=
