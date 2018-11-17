@@ -19,13 +19,13 @@ const (
 	// ReleaseTypeDevice is a device release
 	ReleaseTypeDevice ReleaseType = "Device"
 
-	// ReleaseTypeRedsn0w is a redsn0w release
+	// Deprecated: ReleaseTypeRedsn0w is a redsn0w release
 	ReleaseTypeRedsn0w ReleaseType = "redsn0w"
 
-	// ReleaseTypePwnageTool is a PwnageTool release
+	// Deprecated: ReleaseTypePwnageTool is a PwnageTool release
 	ReleaseTypePwnageTool ReleaseType = "PwnageTool"
 
-	// ReleaseTypeiTunes is an iTunes release
+	// Deprecated: ReleaseTypeiTunes is an iTunes release
 	ReleaseTypeiTunes ReleaseType = "iTunes"
 
 	// ReleaseTypeiOSOTA is an OTA release
@@ -36,6 +36,9 @@ const (
 
 	// ReleaseTypeSigning is a signing change to an iOS firmware
 	ReleaseTypeSigning ReleaseType = "shsh"
+
+	// ReleaseTypeTvOS is a tvOS release
+	ReleaseTypeTvOS ReleaseType = "tvOS"
 )
 
 type BaseDevice struct {
