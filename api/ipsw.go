@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"io"
 	"time"
 
 	"gopkg.in/guregu/null.v3"
@@ -130,48 +130,18 @@ type FirmwareKey struct {
 }
 
 type IPSWClient struct {
-	client *http.Client
-	base   string
+	client *ipswHTTPWrapper
 }
 
 // NewIPSWClient creates an IPSWClient. If client == nil, http.DefaultClient is used.
-func NewIPSWClient(apiBase string, client *http.Client) *IPSWClient {
-	if client == nil {
-		client = http.DefaultClient
-	}
-
+func NewIPSWClient(apiBase string, httpClient HTTPClient) *IPSWClient {
 	return &IPSWClient{
-		base:   apiBase,
-		client: client,
+		client: newHTTPWrapper(apiBase, httpClient),
 	}
 }
 
-// makeRequest makes the http request to a given endpoint
-// note: makeRequest does not call resp.Body.Close(), this must be done manually
-func (c *IPSWClient) makeRequest(url string, headers map[string]string) (*http.Response, error) {
-	request, err := http.NewRequest("GET", c.base+url, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	request.Header.Add("Accept", "application/json")
-
-	for key, val := range headers {
-		request.Header.Add(key, val)
-	}
-
-	res, err := c.client.Do(request)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return res, err
-}
-
-func parseJSON(res *http.Response, output interface{}) error {
-	return json.NewDecoder(res.Body).Decode(&output)
+func parseJSON(r io.Reader, output interface{}) error {
+	return json.NewDecoder(r).Decode(&output)
 }
 
 func (c *IPSWClient) Devices(onlyShowDevicesWithKeys bool) ([]BaseDevice, error) {
@@ -183,13 +153,11 @@ func (c *IPSWClient) Devices(onlyShowDevicesWithKeys bool) ([]BaseDevice, error)
 		requestURL += "?keysOnly=true"
 	}
 
-	resp, err := c.makeRequest(requestURL, nil)
+	resp, _, err := c.client.makeRequest(requestURL, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &devices)
 
@@ -199,13 +167,11 @@ func (c *IPSWClient) Devices(onlyShowDevicesWithKeys bool) ([]BaseDevice, error)
 func (c *IPSWClient) DeviceInformation(identifier string) (*Device, error) {
 	var device *Device
 
-	resp, err := c.makeRequest("/device/"+identifier, nil)
+	resp, _, err := c.client.makeRequest("/device/"+identifier, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &device)
 
@@ -215,13 +181,11 @@ func (c *IPSWClient) DeviceInformation(identifier string) (*Device, error) {
 func (c *IPSWClient) OTADeviceInformation(identifier string) (*OTADevice, error) {
 	var device *OTADevice
 
-	resp, err := c.makeRequest("/device/"+identifier+"?type=ota", nil)
+	resp, _, err := c.client.makeRequest("/device/"+identifier+"?type=ota", nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &device)
 
@@ -231,13 +195,11 @@ func (c *IPSWClient) OTADeviceInformation(identifier string) (*OTADevice, error)
 func (c *IPSWClient) IPSWInformation(identifier, buildid string) (*Firmware, error) {
 	var fw *Firmware
 
-	resp, err := c.makeRequest(fmt.Sprintf("/ipsw/%s/%s", identifier, buildid), nil)
+	resp, _, err := c.client.makeRequest(fmt.Sprintf("/ipsw/%s/%s", identifier, buildid), nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &fw)
 
@@ -247,13 +209,11 @@ func (c *IPSWClient) IPSWInformation(identifier, buildid string) (*Firmware, err
 func (c *IPSWClient) OTAInformation(identifier, buildid, prerequisite string) (*OTAFirmware, error) {
 	var fw *OTAFirmware
 
-	resp, err := c.makeRequest(fmt.Sprintf("/ota/%s/%s", identifier, buildid), nil)
+	resp, _, err := c.client.makeRequest(fmt.Sprintf("/ota/%s/%s", identifier, buildid), nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &fw)
 
@@ -263,13 +223,11 @@ func (c *IPSWClient) OTAInformation(identifier, buildid, prerequisite string) (*
 func (c *IPSWClient) IPSWsForVersion(version string) ([]Firmware, error) {
 	var fws []Firmware
 
-	resp, err := c.makeRequest("/ipsw/"+version, nil)
+	resp, _, err := c.client.makeRequest("/ipsw/"+version, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &fws)
 
@@ -279,13 +237,11 @@ func (c *IPSWClient) IPSWsForVersion(version string) ([]Firmware, error) {
 func (c *IPSWClient) OTAsForVersion(version string) ([]OTAFirmware, error) {
 	var fws []OTAFirmware
 
-	resp, err := c.makeRequest("/ota/"+version, nil)
+	resp, _, err := c.client.makeRequest("/ota/"+version, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &fws)
 
@@ -295,13 +251,11 @@ func (c *IPSWClient) OTAsForVersion(version string) ([]OTAFirmware, error) {
 func (c *IPSWClient) ITunes(platform string) ([]ITunes, error) {
 	var itunes []ITunes
 
-	resp, err := c.makeRequest("/itunes/"+platform, nil)
+	resp, _, err := c.client.makeRequest("/itunes/"+platform, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &itunes)
 
@@ -311,13 +265,11 @@ func (c *IPSWClient) ITunes(platform string) ([]ITunes, error) {
 func (c *IPSWClient) KeysList(identifier string) ([]FirmwareInfo, error) {
 	var info []FirmwareInfo
 
-	resp, err := c.makeRequest("/keys/device/"+identifier, nil)
+	resp, _, err := c.client.makeRequest("/keys/device/"+identifier, nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &info)
 
@@ -327,13 +279,11 @@ func (c *IPSWClient) KeysList(identifier string) ([]FirmwareInfo, error) {
 func (c *IPSWClient) KeysForIPSW(identifier, buildid string) (*FirmwareInfo, error) {
 	var info *FirmwareInfo
 
-	resp, err := c.makeRequest(fmt.Sprintf("/keys/ipsw/%s/%s", identifier, buildid), nil)
+	resp, _, err := c.client.makeRequest(fmt.Sprintf("/keys/ipsw/%s/%s", identifier, buildid), nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &info)
 
@@ -343,13 +293,11 @@ func (c *IPSWClient) KeysForIPSW(identifier, buildid string) (*FirmwareInfo, err
 func (c *IPSWClient) ReleaseInformation() ([]ReleasesByDate, error) {
 	var releases []ReleasesByDate
 
-	resp, err := c.makeRequest("/releases", nil)
+	resp, _, err := c.client.makeRequest("/releases", nil)
 
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &releases)
 
@@ -363,13 +311,11 @@ type modelResponse struct {
 func (c *IPSWClient) IdentifyModel(model string) (string, error) {
 	var r modelResponse
 
-	resp, err := c.makeRequest("/model/"+model, nil)
+	resp, _, err := c.client.makeRequest("/model/"+model, nil)
 
 	if err != nil {
 		return "", err
 	}
-
-	defer resp.Body.Close()
 
 	err = parseJSON(resp, &r)
 
