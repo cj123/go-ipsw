@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"time"
 
 	"gopkg.in/guregu/null.v3"
@@ -330,4 +331,14 @@ func (c *IPSWClient) URL(identifier, buildid string) (string, error) {
 	}
 
 	return fw.URL, nil
+}
+
+func (c *IPSWClient) OTADocumentation(device, version string) ([]byte, error) {
+	resp, _, err := c.client.makeRequest("/ota/documentation/" + device + "/" + version, nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(resp)
 }
