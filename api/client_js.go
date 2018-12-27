@@ -22,7 +22,7 @@ type ipswHTTPWrapper struct {
 
 func (h *ipswHTTPWrapper) makeRequest(url string, headers map[string]string) (body io.Reader, statusCode int, err error) {
 	r := xhr.NewRequest("GET", h.base+url)
-	r.Timeout = 2000 // 2 seconds
+	r.Timeout = 30000 // 30 seconds
 	r.ResponseType = xhr.Text
 
 	for key, val := range headers {
