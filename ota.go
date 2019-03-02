@@ -71,10 +71,12 @@ type OTABuildManifest struct {
 }
 
 type OTABuildIdentity struct {
-	ApChipID  string                `plist:"ApChipID"`
-	ApBoardID string                `plist:"ApBoardID"`
-	Manifest  map[string]*Image     `plist:"Manifest"`
-	Info      *OTABuildIdentityInfo `plist:"Info"`
+	ApChipID         string                `plist:"ApChipID"`
+	ApBoardID        string                `plist:"ApBoardID"`
+	ApSecurityDomain string                `plist:"ApSecurityDomain"`
+	UniqueBuildID    []byte                `plist:"UniqueBuildID"`
+	Manifest         map[string]*Image     `plist:"Manifest"`
+	Info             *OTABuildIdentityInfo `plist:"Info"`
 }
 
 type Image struct {

@@ -15,8 +15,8 @@ type CanIJailbreakClient struct {
 	client *ipswHTTPWrapper
 }
 
-func (c *CanIJailbreakClient) GetJailbreaks() (*model.JailbreakJSON, error) {
-	var jbs *model.JailbreakJSON
+func (c *CanIJailbreakClient) GetJailbreaks() (*model.Jailbreaks, error) {
+	var jbs *model.Jailbreaks
 
 	resp, _, err := c.client.makeRequest("jailbreaks.json", nil)
 
