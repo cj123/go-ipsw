@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"howett.net/ranger"
+	"github.com/cj123/ranger"
 )
 
 var MaxDownloadTries = 10
@@ -53,8 +53,9 @@ func DownloadFile(resource, file string, w io.Writer) error {
 	for downloadCount := 1; downloadCount <= MaxDownloadTries; downloadCount++ {
 		reader, err := ranger.NewReader(
 			&ranger.HTTPRanger{
-				URL:    u,
-				Client: DefaultClient,
+				URL:                            u,
+				Client:                         DefaultClient,
+				DisableAcceptRangesHeaderCheck: true,
 			},
 		)
 
