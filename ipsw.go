@@ -85,9 +85,11 @@ type BuildIdentity struct {
 }
 
 type BuildIdentityInfo struct {
-	BuildNumber string
-	BuildTrain  string
-	DeviceClass string
+	BuildNumber     string
+	BuildTrain      string
+	DeviceClass     string
+	Variant         string
+	RestoreBehavior string
 }
 
 type BuildIdentityManifest map[string]Manifest
