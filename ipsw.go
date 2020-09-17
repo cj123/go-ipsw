@@ -88,6 +88,7 @@ type BuildIdentityInfo struct {
 	BuildNumber string
 	BuildTrain  string
 	DeviceClass string
+	Variant     string
 }
 
 type BuildIdentityManifest map[string]Manifest
