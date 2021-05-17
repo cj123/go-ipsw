@@ -4,7 +4,7 @@ import "github.com/cj123/canijailbreak.com/model"
 
 const CanIJailbreakURL = "https://canijailbreak.com/"
 
-// NewIPSWClient creates an IPSWClient. If client == nil, http.DefaultClient is used.
+// NewCanIJailbreakClient creates a CanIJailbreakClient. If client == nil, http.DefaultClient is used.
 func NewCanIJailbreakClient(apiBase string, httpClient HTTPClient) *CanIJailbreakClient {
 	return &CanIJailbreakClient{
 		client: newHTTPWrapper(apiBase, httpClient),

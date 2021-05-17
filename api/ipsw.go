@@ -43,9 +43,23 @@ const (
 )
 
 type BaseDevice struct {
-	Identifier  string `json:"identifier"`
-	Name        string `json:"name"`
-	BoardConfig string `json:"BoardConfig"`
+	Identifier string `json:"identifier"`
+	Name       string `json:"name"`
+
+	Boards []Board `json:"boards"`
+
+	// Deprecated: Use Boards instead.
+	BoardConfig string `json:"boardconfig"`
+	// Deprecated: Use Boards instead.
+	Platform string `json:"platform"`
+	// Deprecated: Use Boards instead.
+	CPID int `json:"cpid"`
+	// Deprecated: Use Boards instead.
+	BDID int `json:"bdid"`
+}
+
+type Board struct {
+	BoardConfig string `json:"boardconfig"`
 	Platform    string `json:"platform"`
 	CPID        int    `json:"cpid"`
 	BDID        int    `json:"bdid"`
@@ -57,7 +71,7 @@ type Device struct {
 	Firmwares []Firmware `json:"firmwares"`
 }
 
-// Device is an iOS device released by Apple, and all available OTA files for it.
+// OTADevice is an iOS device released by Apple, and all available OTA files for it.
 type OTADevice struct {
 	BaseDevice
 	Firmwares []OTAFirmware `json:"firmwares"`
