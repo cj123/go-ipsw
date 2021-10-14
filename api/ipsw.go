@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"time"
 
 	"gopkg.in/guregu/null.v3"
@@ -90,6 +91,7 @@ type Firmware struct {
 	ReleaseDate null.Time `json:"releasedate"`
 	URL         string    `json:"url"`
 	Signed      bool      `json:"signed"`
+	SHA256Sum   string    `json:"sha256sum"`
 }
 
 // OTAFirmware represents an "over-the-air" firmware file
@@ -348,10 +350,14 @@ func (c *IPSWClient) URL(identifier, buildid string) (string, error) {
 }
 
 func (c *IPSWClient) OTADocumentation(device, version string) ([]byte, error) {
-	resp, _, err := c.client.makeRequest("/ota/documentation/"+device+"/"+version, nil)
+	resp, statusCode, err := c.client.makeRequest("/ota/documentation/"+device+"/"+version, nil)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if statusCode != http.StatusOK {
+		return nil, nil
 	}
 
 	return ioutil.ReadAll(resp)

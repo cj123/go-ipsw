@@ -1,5 +1,7 @@
 module github.com/cj123/go-ipsw
 
+go 1.15
+
 require (
 	github.com/cj123/canijailbreak.com v0.0.0-20190224105143-a662e822e341
 	github.com/cj123/ranger v0.0.0-20190826193242-f29891788cee
