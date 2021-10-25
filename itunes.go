@@ -43,12 +43,29 @@ type VersionWrapper struct {
 
 type iTunesVersionMaster struct {
 	MobileDeviceSoftwareVersionsByVersion map[string]*VersionWrapper
+	MobileDeviceSoftwareVersions          map[string]*VersionWrapper
 }
 
 // Given a device, find a URL from the version master
 // the URL itself doesn't matter, so long as it's an IPSW for the device we requested
 func (vm *iTunesVersionMaster) GetSoftwareURLFor(identifier string) (string, error) {
 	for _, deviceSoftwareVersions := range vm.MobileDeviceSoftwareVersionsByVersion {
+		for i, builds := range deviceSoftwareVersions.MobileDeviceSoftwareVersions {
+			if i.String() == identifier {
+				for _, build := range builds {
+					if build.Restore != nil {
+						// don't return protected ones if we can avoid it
+						if strings.Contains(build.Restore.FirmwareURL, "protected://") {
+							continue
+						}
+						return build.Restore.FirmwareURL, nil
+					}
+				}
+			}
+		}
+	}
+
+	for _, deviceSoftwareVersions := range vm.MobileDeviceSoftwareVersions {
 		for i, builds := range deviceSoftwareVersions.MobileDeviceSoftwareVersions {
 			if i.String() == identifier {
 				for _, build := range builds {
